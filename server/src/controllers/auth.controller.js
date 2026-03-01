@@ -44,7 +44,7 @@ const login = async (req, res) => {
 
     // Query database for active staff member with matching email
     // Using parameterized query to prevent SQL injection
-    const query = 'SELECT * FROM staff WHERE email = ? AND is_active = 1';
+    const query = 'SELECT * FROM staff WHERE email = $1 AND is_active = true';
     const staff = await db.queryOne(query, [email]);
 
     // Return generic error message to prevent user enumeration attacks
@@ -142,7 +142,7 @@ const register = async (req, res) => {
     }
 
     // Check if email already registered to prevent duplicate accounts
-    const checkQuery = 'SELECT id FROM staff WHERE email = ?';
+    const checkQuery = 'SELECT id FROM staff WHERE email = $1';
     const existingStaff = await db.queryOne(checkQuery, [email]);
 
     if (existingStaff) {
@@ -160,7 +160,7 @@ const register = async (req, res) => {
     // Insert new staff member with hashed password
     const insertQuery = `
       INSERT INTO staff (email, password_hash, first_name, last_name, role, is_active, created_at)
-      VALUES (?, ?, ?, ?, ?, 1, NOW())
+      VALUES ($1, $2, $3, $4, $5, true, NOW())
     `;
 
     const result = await db.insert(insertQuery, [
@@ -213,7 +213,7 @@ const getProfile = async (req, res) => {
     const query = `
       SELECT id, email, first_name, last_name, role, is_active, created_at, updated_at
       FROM staff
-      WHERE id = ?
+      WHERE id = $1
     `;
 
     const staff = await db.queryOne(query, [staffId]);
@@ -256,7 +256,7 @@ const updatePassword = async (req, res) => {
     const staffId = req.user.id;
 
     // Retrieve current password hash from database
-    const query = 'SELECT password_hash FROM staff WHERE id = ?';
+    const query = 'SELECT password_hash FROM staff WHERE id = $1';
     const staff = await db.queryOne(query, [staffId]);
 
     if (!staff) {
@@ -289,7 +289,7 @@ const updatePassword = async (req, res) => {
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
     // Update password in database
-    const updateQuery = 'UPDATE staff SET password_hash = ? WHERE id = ?';
+    const updateQuery = 'UPDATE staff SET password_hash = $1 WHERE id = $2';
     await db.update(updateQuery, [hashedPassword, staffId]);
 
     res.status(200).json({
