@@ -1,80 +1,58 @@
-const mysql = require('mysql2/promise');
+const { Client } = require('pg');
 const fs = require('fs');
 const path = require('path');
 require('dotenv').config();
 
 const dbConfig = {
   host: process.env.DB_HOST || 'localhost',
-  user: process.env.DB_USER || 'root',
+  user: process.env.DB_USER || 'postgres',
   password: process.env.DB_PASSWORD || '',
-  port: process.env.DB_PORT || 3306,
-  connectTimeout: 10000
+  database: process.env.DB_NAME || 'meditrack_db',
+  port: process.env.DB_PORT || 5432,
+  ssl: {
+    rejectUnauthorized: false
+  }
 };
 
-const dbName = process.env.DB_NAME || 'meditrack_db';
-
 async function initializeDatabase() {
-  let connection;
+  const client = new Client(dbConfig);
   try {
-    console.log('🔄 Connecting to MySQL...');
-    
-    // Connect without database selection first
-    connection = await mysql.createConnection(dbConfig);
-    console.log('✅ Connected to MySQL');
-
-    // Create database if not exists
-    console.log(`🔄 Creating database '${dbName}' if not exists...`);
-    await connection.query(`CREATE DATABASE IF NOT EXISTS \`${dbName}\``);
-    console.log(`✅ Database '${dbName}' ready`);
-
-    // Switch to the database
-    await connection.query(`USE \`${dbName}\``);
-    console.log(`✅ Switched to database '${dbName}'`);
+    console.log('🔄 Connecting to PostgreSQL...');
+    await client.connect();
+    console.log('✅ Connected to PostgreSQL');
 
     // Read and execute schema file
     const schemaPath = path.join(__dirname, 'database.sql');
     if (fs.existsSync(schemaPath)) {
-      console.log('🔄 Creating tables...');
+      console.log('🔄 Creating tables and indexes...');
       const schemaSql = fs.readFileSync(schemaPath, 'utf8');
       
-      // Remove SQL comments and split by semicolon
-      const cleanSql = schemaSql
-        .split('\n')
-        .map(line => {
-          // Remove line comments
-          const commentIndex = line.indexOf('--');
-          return commentIndex === -1 ? line : line.substring(0, commentIndex);
-        })
-        .join('\n');
-      
-      const rawStatements = cleanSql.split(';');
+      // Split by semicolons
+      const statements = schemaSql
+        .split(';')
+        .map((statement) => statement.trim())
+        .filter((statement) => statement.length > 0);
+
       let statementCount = 0;
-
-      for (let i = 0; i < rawStatements.length; i++) {
-        let statement = rawStatements[i].trim();
-        
-        // Skip empty statements
-        if (!statement) {
-          continue;
-        }
-        
-        // Skip USE statements
-        if (statement.toUpperCase().startsWith('USE ')) {
-          continue;
-        }
-
+      for (const statement of statements) {
         try {
-          console.log(`   Executing statement ${++statementCount}...`);
-          await connection.query(statement);
+          await client.query(statement);
+          statementCount++;
+          console.log(`   ✅ Statement ${statementCount} executed`);
         } catch (error) {
-          console.error(`   ❌ Error in statement ${statementCount}: ${error.message}`);
-          console.error(`   Statement: ${statement.substring(0, 100)}...`);
-          throw error;
+          // Ignore "already exists" errors
+          if (error.message.includes('already exists') || error.message.includes('already exists')) {
+            console.log(`   ⏭️ Skipped: already exists`);
+          } else {
+            console.error(`   ❌ Error: ${error.message}`);
+            throw error;
+          }
         }
       }
       console.log(`✅ Tables created successfully (${statementCount} statements executed)`);
     } else {
-      console.warn('⚠️  database.sql not found at', schemaPath);
+      console.error('❌ database.sql file not found');
+      process.exit(1);
     }
 
     // Read and execute data insertion file
@@ -83,38 +61,20 @@ async function initializeDatabase() {
       console.log('🔄 Inserting sample data...');
       const dataSql = fs.readFileSync(dataPath, 'utf8');
       
-      // Remove SQL comments and split by semicolon
-      const cleanSql = dataSql
-        .split('\n')
-        .map(line => {
-          // Remove line comments
-          const commentIndex = line.indexOf('--');
-          return commentIndex === -1 ? line : line.substring(0, commentIndex);
-        })
-        .join('\n');
-      
-      const rawStatements = cleanSql.split(';');
+      // Split by semicolons
+      const statements = dataSql
+        .split(';')
+        .map((statement) => statement.trim())
+        .filter((statement) => statement.length > 0);
+
       let insertCount = 0;
-
-      for (let i = 0; i < rawStatements.length; i++) {
-        let statement = rawStatements[i].trim();
-        
-        // Skip empty statements
-        if (!statement) {
-          continue;
-        }
-        
-        // Skip USE statements
-        if (statement.toUpperCase().startsWith('USE ')) {
-          continue;
-        }
-
+      for (const statement of statements) {
         try {
-          await connection.query(statement);
+          await client.query(statement);
           insertCount++;
         } catch (error) {
           // Might have duplicate entries, log but continue
-          if (error.message.includes('Duplicate')) {
+          if (error.message.includes('duplicate') || error.message.includes('Duplicate')) {
             console.warn(`   ⚠️  Duplicate entry skipped`);
           } else {
             console.warn(`   ⚠️  Warning: ${error.message}`);
@@ -132,13 +92,12 @@ async function initializeDatabase() {
     console.log('   Password: Password123!');
     console.log('\n⚠️  Please change these credentials after first login!');
 
+    process.exit(0);
   } catch (error) {
     console.error('❌ Database initialization failed:', error.message);
     process.exit(1);
   } finally {
-    if (connection) {
-      await connection.end();
-    }
+    await client.end();
   }
 }
 

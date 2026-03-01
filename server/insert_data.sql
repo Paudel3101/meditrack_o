@@ -1,12 +1,10 @@
 -- Insert Sample Data into MediTrack Database
 
-USE meditrack_db;
-
 -- Insert Staff Members (passwords are hashed with bcrypt)
 -- Admin user: admin@meditrack.com / Password123!
 INSERT INTO staff (email, password_hash, first_name, last_name, phone, role, is_active) VALUES
 ('admin@meditrack.com', '$2b$10$GVIPQszy4ZHDPxb8nkWlaeMwGRThpyBNN.lPw1cvpisHUkcISuiTy', 'Admin', 'User', '1234567890', 'Admin', TRUE),
-('dr.john@meditrack.com', '$$2b$10$GVIPQszy4ZHDPxb8nkWlaeMwGRThpyBNN.lPw1cvpisHUkcISuiTy', 'John', 'Smith', '9876543210', 'Doctor', TRUE),
+('dr.john@meditrack.com', '$2b$10$GVIPQszy4ZHDPxb8nkWlaeMwGRThpyBNN.lPw1cvpisHUkcISuiTy', 'John', 'Smith', '9876543210', 'Doctor', TRUE),
 ('dr.sarah@meditrack.com', '$2b$10$GVIPQszy4ZHDPxb8nkWlaeMwGRThpyBNN.lPw1cvpisHUkcISuiTy', 'Sarah', 'Johnson', '8765432109', 'Doctor', TRUE),
 ('nurse.emily@meditrack.com', '$2b$10$GVIPQszy4ZHDPxb8nkWlaeMwGRThpyBNN.lPw1cvpisHUkcISuiTy', 'Emily', 'Williams', '7654321098', 'Nurse', TRUE),
 ('receptionist.jane@meditrack.com', '$2b$10$GVIPQszy4ZHDPxb8nkWlaeMwGRThpyBNN.lPw1cvpisHUkcISuiTy', 'Jane', 'Brown', '6543210987', 'Receptionist', TRUE);
@@ -46,6 +44,4 @@ INSERT INTO appointments (patient_id, doctor_id, appointment_date, appointment_t
 (7, 2, '2026-02-15', '13:00:00', 45, 'Scheduled', 'Physical therapy discussion', 5),
 (8, 3, '2026-02-17', '10:30:00', 30, 'Scheduled', 'Thyroid medication adjustment', 5),
 (1, 3, '2026-02-20', '14:00:00', 30, 'Scheduled', 'General check-up', 5),
-(9, 2, '2026-02-22', '11:30:00', 30, 'Scheduled', 'Initial consultation', 5);
-
--- Insert Sessions (initially empty - will be populated on login)
+(9, 2, '2026-02-22', '11:30:00', 30, 'Scheduled', 'Initial consultation', 5);-- Insert Sessions (initially empty - will be populated on login)

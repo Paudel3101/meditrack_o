@@ -1,4 +1,4 @@
-const mysql = require('mysql2/promise');
+const { Pool } = require('pg');
 const config = require('../config/database');
 const dbConfig = config.dbConfig || config;
 
@@ -10,8 +10,8 @@ class Database {
   async initialize() {
     if (!this.pool) {
       try {
-        this.pool = await mysql.createPool(dbConfig);
-        console.log('Database connection pool created successfully');
+        this.pool = new Pool(dbConfig);
+        console.log('PostgreSQL connection pool created successfully');
       } catch (error) {
         console.error('Failed to create database connection pool:', error);
         throw error;
@@ -25,15 +25,12 @@ class Database {
       await this.initialize();
     }
     
-    const connection = await this.pool.getConnection();
     try {
-      const [results] = await connection.execute(sql, values);
-      return results;
+      const result = await this.pool.query(sql, values);
+      return result.rows;
     } catch (error) {
       console.error('Database query error:', error);
       throw error;
-    } finally {
-      connection.release();
     }
   }
 
@@ -47,18 +44,16 @@ class Database {
       await this.initialize();
     }
     
-    const connection = await this.pool.getConnection();
     try {
-      const [result] = await connection.execute(sql, values);
+      const result = await this.pool.query(sql, values);
       return {
-        insertId: result.insertId,
-        affectedRows: result.affectedRows
+        insertId: result.rows[0]?.id,
+        affectedRows: result.rowCount,
+        rows: result.rows
       };
     } catch (error) {
       console.error('Database insert error:', error);
       throw error;
-    } finally {
-      connection.release();
     }
   }
 
@@ -67,18 +62,15 @@ class Database {
       await this.initialize();
     }
     
-    const connection = await this.pool.getConnection();
     try {
-      const [result] = await connection.execute(sql, values);
+      const result = await this.pool.query(sql, values);
       return {
-        affectedRows: result.affectedRows,
-        changedRows: result.changedRows
+        affectedRows: result.rowCount,
+        changedRows: result.rowCount
       };
     } catch (error) {
       console.error('Database update error:', error);
       throw error;
-    } finally {
-      connection.release();
     }
   }
 
@@ -87,37 +79,30 @@ class Database {
       await this.initialize();
     }
     
-    const connection = await this.pool.getConnection();
     try {
-      const [result] = await connection.execute(sql, values);
+      const result = await this.pool.query(sql, values);
       return {
-        affectedRows: result.affectedRows
+        affectedRows: result.rowCount
       };
     } catch (error) {
       console.error('Database delete error:', error);
       throw error;
-    } finally {
-      connection.release();
     }
   }
 
   async transaction(callback) {
-    if (!this.pool) {
-      await this.initialize();
-    }
-    
-    const connection = await this.pool.getConnection();
+    const client = await this.pool.connect();
     try {
-      await connection.beginTransaction();
-      const result = await callback(connection);
-      await connection.commit();
+      await client.query('BEGIN');
+      const result = await callback(client);
+      await client.query('COMMIT');
       return result;
     } catch (error) {
-      await connection.rollback();
+      await client.query('ROLLBACK');
       console.error('Transaction error:', error);
       throw error;
     } finally {
-      connection.release();
+      client.release();
     }
   }
 
@@ -133,7 +118,5 @@ class Database {
     return this.pool;
   }
 }
-
-module.exports = new Database();
 
 module.exports = new Database();
