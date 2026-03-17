@@ -48,7 +48,7 @@ function Navbar() {
         {isAuthenticated ? (
           <div style={styles.userArea}>
             <span style={styles.userName}>
-              {user?.name || user?.email}
+              {user?.first_name ? `${user.first_name} ${user.last_name}` : user?.email}
             </span>
             <span style={styles.userRole}>{user?.role}</span>
             <button onClick={handleLogout} style={styles.logoutBtn}>

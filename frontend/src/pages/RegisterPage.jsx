@@ -5,7 +5,8 @@ import { useAuth } from '../context/AuthContext';
 const ROLES = ['Admin', 'Doctor', 'Nurse', 'Receptionist'];
 
 const INITIAL_FORM = {
-  name: '',
+  first_name: '',
+  last_name: '',
   email: '',
   password: '',
   confirmPassword: '',
@@ -31,11 +32,15 @@ function RegisterPage() {
 
   const validate = () => {
     const newErrors = {};
-    if (!formData.name.trim()) newErrors.name = 'Full name is required';
+    if (!formData.first_name.trim()) newErrors.first_name = 'First name is required';
+    if (!formData.last_name.trim()) newErrors.last_name = 'Last name is required';
     if (!formData.email.trim()) newErrors.email = 'Email is required';
     else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Enter a valid email';
     if (!formData.password) newErrors.password = 'Password is required';
-    else if (formData.password.length < 6) newErrors.password = 'Password must be at least 6 characters';
+    else if (formData.password.length < 8) newErrors.password = 'Min 8 characters';
+    else if (!/[A-Z]/.test(formData.password)) newErrors.password = 'Must include an uppercase letter';
+    else if (!/[0-9]/.test(formData.password)) newErrors.password = 'Must include a number';
+    else if (!/[!@#$%^&*]/.test(formData.password)) newErrors.password = 'Must include a special character (!@#$%^&*)';
     if (!formData.confirmPassword) newErrors.confirmPassword = 'Please confirm your password';
     else if (formData.password !== formData.confirmPassword) newErrors.confirmPassword = 'Passwords do not match';
     if (!formData.role) newErrors.role = 'Please select a role';
@@ -53,7 +58,8 @@ function RegisterPage() {
     setApiError('');
     setSuccess('');
     try {
-      const { confirmPassword, ...submitData } = formData;
+      const { confirmPassword, phone, ...submitData } = formData;
+      if (phone) submitData.phone = phone;
       await register(submitData);
       setSuccess('Account created successfully! Redirecting to login...');
       setTimeout(() => navigate('/login'), 2000);
@@ -80,18 +86,33 @@ function RegisterPage() {
         {success && <div className="alert alert-success">{success}</div>}
 
         <form onSubmit={handleSubmit} noValidate>
-          <div className="form-group">
-            <label className="form-label" htmlFor="name">Full Name</label>
-            <input
-              id="name"
-              name="name"
-              type="text"
-              className={`form-control${errors.name ? ' error' : ''}`}
-              value={formData.name}
-              onChange={handleChange}
-              placeholder="Dr. Jane Smith"
-            />
-            {errors.name && <span className="form-error">{errors.name}</span>}
+          <div className="form-row">
+            <div className="form-group">
+              <label className="form-label" htmlFor="first_name">First Name</label>
+              <input
+                id="first_name"
+                name="first_name"
+                type="text"
+                className={`form-control${errors.first_name ? ' error' : ''}`}
+                value={formData.first_name}
+                onChange={handleChange}
+                placeholder="Jane"
+              />
+              {errors.first_name && <span className="form-error">{errors.first_name}</span>}
+            </div>
+            <div className="form-group">
+              <label className="form-label" htmlFor="last_name">Last Name</label>
+              <input
+                id="last_name"
+                name="last_name"
+                type="text"
+                className={`form-control${errors.last_name ? ' error' : ''}`}
+                value={formData.last_name}
+                onChange={handleChange}
+                placeholder="Smith"
+              />
+              {errors.last_name && <span className="form-error">{errors.last_name}</span>}
+            </div>
           </div>
 
           <div className="form-row">

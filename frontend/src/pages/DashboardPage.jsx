@@ -48,7 +48,7 @@ function DashboardPage() {
       <div style={styles.banner}>
         <div>
           <h1 style={styles.bannerTitle}>
-            Welcome back, {user?.name || 'User'}
+            Welcome back, {user?.first_name || 'User'}
           </h1>
           <p style={styles.bannerSub}>
             {new Date().toLocaleDateString('en-US', {
