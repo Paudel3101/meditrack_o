@@ -4,7 +4,6 @@ const patientController = require('../controllers/patient.controller');
 const authMiddleware = require('../middleware/auth.middleware');
 const { patientValidators } = require('../middleware/validate.middleware');
 
-// Apply authentication middleware to all routes
 router.use(authMiddleware.verifyToken);
 router.use(authMiddleware.checkSession);
 

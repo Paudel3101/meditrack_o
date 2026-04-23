@@ -4,7 +4,6 @@ const staffController = require('../controllers/staff.controller');
 const authMiddleware = require('../middleware/auth.middleware');
 const { staffValidators } = require('../middleware/validate.middleware');
 
-// All staff routes require authentication
 router.use(authMiddleware.verifyToken);
 
 /**

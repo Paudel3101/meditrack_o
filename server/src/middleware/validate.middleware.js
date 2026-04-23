@@ -1,6 +1,5 @@
 const { body, validationResult } = require('express-validator');
 
-// Middleware to handle validation errors
 const handleValidationErrors = (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -16,7 +15,6 @@ const handleValidationErrors = (req, res, next) => {
   next();
 };
 
-// Auth validators
 const authValidators = {
   login: [
     body('email')
@@ -51,7 +49,6 @@ const authValidators = {
   ]
 };
 
-// Patient validators
 const patientValidators = {
   create: [
     body('medical_record_number')
@@ -115,7 +112,6 @@ const patientValidators = {
   ]
 };
 
-// Appointment validators
 const appointmentValidators = {
   create: [
     body('patient_id')
@@ -143,7 +139,6 @@ const appointmentValidators = {
   ]
 };
 
-// Staff validators
 const staffValidators = {
   create: [
     body('email')

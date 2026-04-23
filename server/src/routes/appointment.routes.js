@@ -4,7 +4,6 @@ const appointmentController = require('../controllers/appointment.controller');
 const authMiddleware = require('../middleware/auth.middleware');
 const { appointmentValidators } = require('../middleware/validate.middleware');
 
-// Apply authentication middleware to all routes
 router.use(authMiddleware.verifyToken);
 router.use(authMiddleware.checkSession);
 

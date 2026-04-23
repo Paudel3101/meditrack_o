@@ -13,7 +13,7 @@ const dashboardController = {
         SELECT COUNT(*) as count
         FROM appointments
         WHERE appointment_date = CURRENT_DATE
-        AND status NOT IN ('cancelled', 'Cancelled')
+        AND status != 'cancelled'
       `);
       const totalAppointmentsResult = await db.query(
         'SELECT COUNT(*) as count FROM appointments'
