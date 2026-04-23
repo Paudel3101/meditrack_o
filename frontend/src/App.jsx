@@ -6,12 +6,19 @@ import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
 import PatientsPage from './pages/PatientsPage';
 import AppointmentsPage from './pages/AppointmentsPage';
+import NotFoundPage from './pages/NotFoundPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import LoadingSpinner from './components/LoadingSpinner';
 
+/**
+ * App — root component that owns the React Router layout.
+ * Protected routes wrap pages with <ProtectedRoute> which
+ * redirects unauthenticated users to /login.
+ */
 function App() {
   const { loading } = useAuth();
 
+  // Block render until auth state is restored from localStorage
   if (loading) {
     return <LoadingSpinner fullScreen />;
   }
@@ -21,8 +28,11 @@ function App() {
       <Navbar />
       <main className="main-content">
         <Routes>
+          {/* Public routes */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+
+          {/* Protected routes — require valid JWT */}
           <Route
             path="/dashboard"
             element={
@@ -47,8 +57,12 @@ function App() {
               </ProtectedRoute>
             }
           />
+
+          {/* Default redirect */}
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+
+          {/* Custom 404 page for any unmatched route */}
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </main>
     </div>
